@@ -45,7 +45,7 @@ cv2.setMouseCallback("Frame", mouse_drawing)
 
 while True:
     _, frame = cam.read()
-    print(type(frame))
+   # print(type(frame))
     if EVT == 4:
         if point1 and point2:
             cv2.rectangle(frame, point1, point2, (0, 255, 0))
