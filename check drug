@@ -1,0 +1,107 @@
+import cv2
+from pyfirmata import Arduino, SERVO, util
+from cvzone.SelfiSegmentationModule import SelfiSegmentation
+
+port = "COM5"
+pin = 12
+pin2 = 11
+board = Arduino(port)
+
+board.digital[pin].mode = SERVO
+board.digital[pin2].mode = SERVO
+
+cap = cv2.VideoCapture(0)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+segmentor = SelfiSegmentation()
+
+def rotateservo(pin, angle):
+    board.digital[pin].write(angle)
+    # sleep(0.015)
+
+def rotateservo2(pin2, angle2):
+    board.digital[pin2].write(angle2)
+    # sleep(0.015)
+
+while True:
+	success, frame = cap.read()
+	hsv_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+	hsv_frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+	height, width, success = frame.shape
+
+	cx = int(width / 2)
+	cy = int(height / 2)
+	cx2 = int(width/2.3)
+	cy2 = int(height/2)
+
+	pixel_center = hsv_frame[cy, cx]
+	pixel_center2 = hsv_frame2[cy2, cx2]
+	hue_value = pixel_center[0]
+	hue_value2 = pixel_center2[0]
+
+	color = "Undefined"
+	drug = "Undefined"
+	if hue_value < 5:
+		color = "RED"
+	elif hue_value < 22:
+		color = "ORANGE"
+		drug = "cough medicine"
+	elif hue_value < 33:
+		color = "YELLOW"
+	elif hue_value < 78:
+		color = "GREEN"
+		drug = "nasal medicine"
+	elif hue_value < 131:
+		color = "BLUE"
+	elif hue_value < 170:
+		color = "VIOLET"
+	else:
+		color = "none"
+
+	color2 = "Undefined"
+	if hue_value2 < 5:
+		color2 = "RED"
+	elif hue_value2 < 22:
+		color2 = "ORANGE"
+		drug = "cough medicine"
+	elif hue_value2 < 33:
+		color2 = "YELLOW"
+	elif hue_value2 < 78:
+		color2 = "GREEN"
+		drug = "nasal medicine"
+	elif hue_value2 < 131:
+		color2 = "BLUE"
+	elif hue_value2 < 170:
+		color2 = "VIOLET"
+	else:
+		color2 = "none"
+
+	if color == "BLUE" and color2 == "YELLOW" or color == "YELLOW" and color2 == "BLUE":
+		drug = "have a servere headache"
+	elif color == "ORANGE" and color2 == "ORANGE":
+		drug = "cough medicine"
+
+	if drug == "have a servere headache":
+		for i in range(0, 180):
+			rotateservo(pin, i)
+	elif drug == "cough medicine":
+		for o in range(0, 180):
+			rotateservo2(pin2, o)
+	elif drug == "nasal medicine":
+		for o in range(0, 180):
+			rotateservo2(pin2, o)
+
+	pixel_center_bgr = frame[cy, cx]
+	b, g, r = int(pixel_center_bgr[0]), int(pixel_center_bgr[1]), int(pixel_center_bgr[2])
+	cv2.putText(frame, color, (10, 70), 0, 1.5, (b, g, r), 2)
+	cv2.putText(frame, drug, (400, 70), 0, 1.5, (b, g, r), 2)
+	cv2.putText(frame, color2, (1100, 70), 0, 1.5, (b, g, r), 2)
+	cv2.circle(frame, (cx, cy), 10, (25, 25, 25), 3)
+	cv2.circle(frame, (cx2, cy2), 10, (25, 25, 25), 3)
+
+	cv2.imshow("Frame", frame)
+	if cv2.waitKey(1) & 0xff == 27:
+		break
+
+cap.release()
+cv2.destroyAllWindows()
