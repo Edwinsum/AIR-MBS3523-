@@ -1,0 +1,21 @@
+import serial
+import cv2
+import time
+
+ser = serial.Serial('com7', baudrate=115200)
+time.sleep(0.2)
+
+def NTL(x): pass
+
+cv2.namedWindow('ServoTrackbar')
+cv2.createTrackbar('ServoPos' 'ServoTrackbar', 90, 180, NTL)
+
+while True:
+    cv2.createTrackbar('ServoPos' 'ServoTrackbar')
+    # print(type(servoPos))
+    servoPos = str(servoPos) + '\r'
+    ser.write(servoPos.encode())
+    print(servoPos)
+    time.sleep(0.1)
+    if cv2.waitKey(1) & 0xff == 27:
+        break
